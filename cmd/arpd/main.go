@@ -39,15 +39,7 @@ func run() error {
 		return err
 	}
 
-	awsCfg, err := config.LoadDefaultConfig(ctx)
-	if err != nil {
-		return fmt.Errorf("load aws config: %w", err)
-	}
-
-	table := store.New(dynamodb.NewFromConfig(awsCfg), cfg.TableName)
-	dir := auth.NewHTTPDirectory(cfg.GlobusClientID, cfg.GlobusClientSecret)
-
-	authn, err := auth.NewAuthenticator(ctx, cfg, dir, table)
+	authn, err := buildAuthenticator(ctx, cfg)
 	if err != nil {
 		return err
 	}
@@ -67,6 +59,30 @@ func run() error {
 		ReadHeaderTimeout: 10 * time.Second,
 	}
 	return srv.ListenAndServe()
+}
+
+// buildAuthenticator wires the real Globus + DynamoDB stack, or the in-memory
+// fake stack under ARP_FAKE_GLOBUS. The fake path touches neither AWS config
+// nor OIDC discovery, so it runs with no network and no Globus client.
+func buildAuthenticator(ctx context.Context, cfg *appcfg.Config) (*auth.Authenticator, error) {
+	if cfg.Fake {
+		fmt.Fprintln(os.Stderr, "arpd: ARP_FAKE_GLOBUS set — using in-memory fake Globus; do not use in a deployed environment")
+		return auth.NewFakeAuthenticator(cfg, store.NewMemory()), nil
+	}
+
+	awsCfg, err := config.LoadDefaultConfig(ctx)
+	if err != nil {
+		return nil, fmt.Errorf("load aws config: %w", err)
+	}
+
+	table := store.New(dynamodb.NewFromConfig(awsCfg), cfg.TableName)
+	dir := auth.NewHTTPDirectory(cfg.GlobusClientID, cfg.GlobusClientSecret)
+
+	authn, err := auth.NewAuthenticator(ctx, cfg, dir, table)
+	if err != nil {
+		return nil, err
+	}
+	return authn, nil
 }
 
 func envOr(k, d string) string {

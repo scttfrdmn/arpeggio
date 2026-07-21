@@ -81,12 +81,20 @@ func (a *Authenticator) Exchange(ctx context.Context, code, verifier string) (*S
 		return nil, fmt.Errorf("verify id token: %w", err)
 	}
 
-	principal, err := a.dir.Introspect(ctx, tok.AccessToken)
+	return a.establish(ctx, tok.AccessToken)
+}
+
+// establish resolves a session from an access token: introspect for the linked
+// identity set, exchange for dependent tokens, then read groups with the
+// dependent Groups token. Split out of Exchange so the fake login seam can
+// reuse it without an OAuth round trip.
+func (a *Authenticator) establish(ctx context.Context, accessToken string) (*Session, error) {
+	principal, err := a.dir.Introspect(ctx, accessToken)
 	if err != nil {
 		return nil, fmt.Errorf("introspect access token: %w", err)
 	}
 
-	dependents, err := a.dir.DependentTokens(ctx, tok.AccessToken)
+	dependents, err := a.dir.DependentTokens(ctx, accessToken)
 	if err != nil {
 		return nil, fmt.Errorf("obtain dependent tokens: %w", err)
 	}
@@ -108,6 +116,14 @@ func (a *Authenticator) Exchange(ctx context.Context, code, verifier string) (*S
 		return nil, fmt.Errorf("persist session: %w", err)
 	}
 	return sess, nil
+}
+
+// FakeLogin mints a session directly from the configured Directory, skipping
+// the Globus OAuth round trip. It exists only for the ARP_FAKE_GLOBUS
+// development seam and must never run against real Globus. The token string is
+// a sentinel the FakeDirectory ignores.
+func (a *Authenticator) FakeLogin(ctx context.Context) (*Session, error) {
+	return a.establish(ctx, "fake-access-token")
 }
 
 // Session loads and validates the session referenced by the request cookie.

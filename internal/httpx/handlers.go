@@ -41,7 +41,23 @@ func (s *Server) health(w http.ResponseWriter, r *http.Request) {
 }
 
 // login redirects to Globus, carrying a PKCE verifier in a short-lived cookie.
+//
+// Under the ARP_FAKE_GLOBUS seam there is no Globus to redirect to: mint a
+// session directly and land on the home route, so the SPA sees a signed-in
+// /api/me with no network.
 func (s *Server) login(w http.ResponseWriter, r *http.Request) {
+	if s.cfg.Fake {
+		sess, err := s.auth.FakeLogin(r.Context())
+		if err != nil {
+			Error(w, http.StatusInternalServerError, "fake_login_failed",
+				"The development login seam could not create a session.")
+			return
+		}
+		auth.SetSessionCookie(w, sess, s.secure())
+		http.Redirect(w, r, s.cfg.PublicBaseURL+"/#/home", http.StatusFound)
+		return
+	}
+
 	url, verifier := s.auth.AuthCodeURL("")
 	state := auth.StateHash(verifier)
 	url, _ = addState(url, state)
