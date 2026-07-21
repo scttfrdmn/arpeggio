@@ -1,0 +1,106 @@
+AWSTemplateFormatVersion: '2010-09-09'
+Transform: AWS::Serverless-2016-10-31
+Description: >
+  Arpeggio control plane (P0). Every resource here bills per-use.
+  Nothing in this template has an hourly floor — see CLAUDE.md golden rule 2.
+
+Parameters:
+  GlobusClientId:
+    Type: String
+  GlobusClientSecretParam:
+    Type: String
+    Default: /arpeggio/globus/client_secret
+    Description: SSM Parameter Store SecureString name (NOT Secrets Manager - that bills monthly)
+  PublicBaseUrl:
+    Type: String
+    Description: Origin the SPA is served from, e.g. https://d111.cloudfront.net
+
+Globals:
+  Function:
+    Runtime: provided.al2023
+    Architectures: [arm64]
+    MemorySize: 512
+    Timeout: 20
+
+Resources:
+
+  # Single table, on-demand. Provisioned capacity is a clock and is banned.
+  Table:
+    Type: AWS::DynamoDB::Table
+    Properties:
+      BillingMode: PAY_PER_REQUEST
+      AttributeDefinitions:
+        - {AttributeName: pk, AttributeType: S}
+        - {AttributeName: sk, AttributeType: S}
+      KeySchema:
+        - {AttributeName: pk, KeyType: HASH}
+        - {AttributeName: sk, KeyType: RANGE}
+      TimeToLiveSpecification:
+        AttributeName: ttl
+        Enabled: true
+      SSESpecification:
+        SSEEnabled: true   # AWS-managed key; a CMK would bill $1/month
+
+  # NOT VpcConfig'd. Deliberate: a VPC-attached Lambda needs NAT or interface
+  # endpoints to reach STS/DynamoDB/Globus, which is a monthly floor.
+  Api:
+    Type: AWS::Serverless::Function
+    Metadata:
+      BuildMethod: makefile
+    Properties:
+      Handler: bootstrap
+      CodeUri: ../bin/
+      Environment:
+        Variables:
+          ARP_TABLE_NAME: !Ref Table
+          ARP_GLOBUS_CLIENT_ID: !Ref GlobusClientId
+          ARP_GLOBUS_CLIENT_SECRET: !Sub '{{resolve:ssm-secure:${GlobusClientSecretParam}}}'
+          ARP_GLOBUS_REDIRECT_URL: !Sub '${PublicBaseUrl}/api/auth/callback'
+          ARP_PUBLIC_BASE_URL: !Ref PublicBaseUrl
+      Policies:
+        - DynamoDBCrudPolicy:
+            TableName: !Ref Table
+      FunctionUrlConfig:
+        AuthType: NONE
+      Events:
+        Any:
+          Type: HttpApi
+          Properties:
+            ApiId: !Ref HttpApi
+            Path: /{proxy+}
+            Method: ANY
+
+  HttpApi:
+    Type: AWS::Serverless::HttpApi
+    Properties:
+      StageName: $default
+      CorsConfiguration:
+        AllowOrigins: [!Ref PublicBaseUrl]
+        AllowCredentials: true
+        AllowMethods: [GET, POST, OPTIONS]
+        AllowHeaders: [content-type]
+
+  WebBucket:
+    Type: AWS::S3::Bucket
+    Properties:
+      PublicAccessBlockConfiguration:
+        BlockPublicAcls: true
+        BlockPublicPolicy: true
+        IgnorePublicAcls: true
+        RestrictPublicBuckets: true
+
+  # Log retention is set explicitly. Default is "never expire", which is the
+  # one part of a serverless stack that quietly compounds forever.
+  ApiLogs:
+    Type: AWS::Logs::LogGroup
+    Properties:
+      LogGroupName: !Sub '/aws/lambda/${Api}'
+      RetentionInDays: 14
+
+Outputs:
+  ApiEndpoint:
+    Value: !Sub 'https://${HttpApi}.execute-api.${AWS::Region}.amazonaws.com'
+  TableName:
+    Value: !Ref Table
+  WebBucket:
+    Value: !Ref WebBucket

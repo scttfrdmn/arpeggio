@@ -1,0 +1,27 @@
+# Build output
+/bin/
+/dist/
+*.zip
+
+# Go
+vendor/
+*.test
+*.out
+
+# Local env
+.env
+.env.*
+!.env.example
+*.local.yaml
+
+# AWS SAM
+.aws-sam/
+samconfig.toml
+
+# Editors / OS
+.DS_Store
+.idea/
+*.swp
+
+# Deliberately NOT ignored: docs/ is architecture only.
+# Project progress lives in GitHub Issues/Projects, not local markdown.

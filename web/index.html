@@ -1,0 +1,228 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>Arpeggio</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=Instrument+Serif:ital@0;1&family=IBM+Plex+Sans:wght@400;500;600&family=IBM+Plex+Mono:wght@400;500&display=swap" rel="stylesheet">
+<style>
+:root{
+  --paper:#EDEFE8; --paper-2:#E4E7DE; --ink:#16211D; --ink-soft:#4A5A52;
+  --verdigris:#2F6E5C; --amber:#A8681C; --rule:#CFD4C9;
+  --display:"Instrument Serif",Georgia,serif;
+  --body:"IBM Plex Sans",system-ui,sans-serif;
+  --mono:"IBM Plex Mono",ui-monospace,monospace;
+}
+*{box-sizing:border-box}
+html,body{margin:0;height:100%}
+body{
+  background:var(--paper); color:var(--ink); font-family:var(--body);
+  font-size:16px; line-height:1.55; -webkit-font-smoothing:antialiased;
+  display:flex; flex-direction:column;
+}
+a{color:var(--verdigris)}
+.wrap{width:100%; max-width:52rem; margin:0 auto; padding:0 1.5rem; flex:1;
+  display:flex; flex-direction:column}
+
+/* ---- masthead ---- */
+header{display:flex; align-items:baseline; gap:.75rem; padding:2.5rem 0 0}
+.mark{font-family:var(--display); font-size:1.9rem; letter-spacing:-.01em}
+.tag{font-family:var(--mono); font-size:.7rem; letter-spacing:.14em;
+  text-transform:uppercase; color:var(--ink-soft)}
+
+/* ---- signature: the arpeggio ----
+   Struck in sequence, decaying. A rolled chord, and an EEG trace. */
+.arp{display:flex; align-items:flex-end; gap:5px; height:76px; margin:3.5rem 0 2.25rem}
+.arp i{display:block; width:3px; background:var(--verdigris); border-radius:2px;
+  height:12%; opacity:.28; transform-origin:bottom;
+  animation:strike 4.4s cubic-bezier(.16,.9,.3,1) infinite}
+@keyframes strike{
+  0%,100%{height:10%; opacity:.22}
+  8%{height:var(--h); opacity:1}
+  46%{height:14%; opacity:.3}
+}
+@media (prefers-reduced-motion:reduce){
+  .arp i{animation:none; height:var(--h); opacity:.5}
+}
+
+h1{font-family:var(--display); font-weight:400; font-size:clamp(2.1rem,5.5vw,3.1rem);
+  line-height:1.1; letter-spacing:-.015em; margin:0 0 1rem; max-width:20ch}
+h1 em{font-style:italic; color:var(--verdigris)}
+.lede{font-size:1.05rem; color:var(--ink-soft); max-width:46ch; margin:0 0 2rem}
+
+/* ---- controls ---- */
+button{font:inherit; cursor:pointer}
+.btn{background:var(--ink); color:var(--paper); border:0; border-radius:2px;
+  padding:.75rem 1.4rem; font-weight:500; letter-spacing:.01em;
+  transition:background .15s ease}
+.btn:hover{background:var(--verdigris)}
+.btn:focus-visible{outline:2px solid var(--verdigris); outline-offset:3px}
+.btn.quiet{background:transparent; color:var(--ink-soft); border:1px solid var(--rule);
+  padding:.5rem 1rem; font-size:.85rem}
+.btn.quiet:hover{background:var(--paper-2); color:var(--ink)}
+
+/* ---- data blocks ---- */
+.panel{border-top:1px solid var(--rule); padding:1.5rem 0}
+.panel h2{font-family:var(--mono); font-size:.7rem; letter-spacing:.14em;
+  text-transform:uppercase; color:var(--ink-soft); font-weight:500; margin:0 0 1rem}
+dl{display:grid; grid-template-columns:11rem 1fr; gap:.55rem 1.5rem; margin:0}
+dt{font-family:var(--mono); font-size:.78rem; color:var(--ink-soft); padding-top:.15rem}
+dd{margin:0; word-break:break-word}
+.uuid{font-family:var(--mono); font-size:.82rem}
+
+ul.plain{list-style:none; margin:0; padding:0; display:grid; gap:.6rem}
+ul.plain li{display:flex; flex-wrap:wrap; align-items:baseline; gap:.6rem;
+  padding:.6rem .8rem; background:var(--paper-2); border-radius:2px}
+.role{font-family:var(--mono); font-size:.68rem; text-transform:uppercase;
+  letter-spacing:.1em; padding:.15rem .45rem; border-radius:2px;
+  background:var(--ink); color:var(--paper)}
+.role[data-r="manager"]{background:var(--verdigris)}
+.role[data-r="member"]{background:transparent; color:var(--ink-soft);
+  border:1px solid var(--rule)}
+.muted{color:var(--ink-soft); font-size:.85rem}
+
+.notice{border-left:2px solid var(--amber); padding:.65rem 0 .65rem .9rem;
+  color:var(--ink-soft); font-size:.9rem; margin:1.25rem 0}
+
+footer{border-top:1px solid var(--rule); margin-top:auto; padding:1.25rem 0 2rem;
+  font-family:var(--mono); font-size:.72rem; color:var(--ink-soft);
+  display:flex; justify-content:space-between; gap:1rem; flex-wrap:wrap}
+[hidden]{display:none !important}
+@media (max-width:34rem){ dl{grid-template-columns:1fr; gap:.15rem 0}
+  dt{padding-top:.5rem} }
+</style>
+</head>
+<body>
+<div class="wrap">
+  <header>
+    <span class="mark">Arpeggio</span>
+    <span class="tag">research portal</span>
+  </header>
+
+  <!-- signed out -->
+  <main id="signin">
+    <div class="arp" aria-hidden="true"></div>
+    <h1>Compute that <em>sounds and decays</em>.</h1>
+    <p class="lede">Sign in with your institutional identity. Browse de-identified
+      data, then launch budgeted, time-bound compute into your own AWS account.</p>
+    <button class="btn" id="go">Sign in with Globus</button>
+    <p class="notice">Your institution's identity provider handles the sign-in
+      through InCommon. Arpeggio never sees your campus password.</p>
+  </main>
+
+  <!-- signed in -->
+  <main id="home" hidden>
+    <h1 id="hello">Signed in.</h1>
+    <p class="lede" id="sub"></p>
+
+    <section class="panel">
+      <h2>Identity</h2>
+      <dl id="ident"></dl>
+    </section>
+
+    <section class="panel">
+      <h2>Globus groups</h2>
+      <ul class="plain" id="groups"></ul>
+      <p class="muted" id="nogroups" hidden>No group memberships yet. A project
+        lead adds you to a Globus group, and it appears here at your next sign-in.</p>
+    </section>
+
+    <section class="panel">
+      <button class="btn quiet" id="out">Sign out</button>
+    </section>
+  </main>
+
+  <footer>
+    <span>Phase P0 &middot; identity only</span>
+    <span>Apache 2.0</span>
+  </footer>
+</div>
+
+<script>
+// Arpeggio signature: heights struck in sequence, then decaying.
+(function () {
+  const el = document.querySelector('.arp');
+  const heights = [34, 58, 92, 71, 46, 80, 63, 38, 55, 88, 49, 30, 66, 42, 74, 36];
+  heights.forEach((h, i) => {
+    const bar = document.createElement('i');
+    bar.style.setProperty('--h', h + '%');
+    bar.style.animationDelay = (i * 0.085) + 's';
+    el.appendChild(bar);
+  });
+})();
+
+const API = (window.ARP_API_BASE || '');
+
+document.getElementById('go').onclick = () => {
+  window.location.href = API + '/api/auth/login';
+};
+
+document.getElementById('out').onclick = async () => {
+  await fetch(API + '/api/auth/logout', { method: 'POST', credentials: 'include' });
+  window.location.hash = '';
+  render(null);
+};
+
+function text(t) { return document.createTextNode(t); }
+
+function render(me) {
+  document.getElementById('signin').hidden = !!me;
+  document.getElementById('home').hidden = !me;
+  if (!me) return;
+
+  document.getElementById('hello').textContent = me.name || 'Signed in.';
+  document.getElementById('sub').textContent =
+    (me.organization ? me.organization + ' \u00b7 ' : '') +
+    'session ends ' + new Date(me.session_expires_at).toLocaleString();
+
+  const dl = document.getElementById('ident');
+  dl.replaceChildren();
+  const rows = [
+    ['Subject', me.subject, 'uuid'],
+    ['Username', me.username],
+    ['Email', me.email],
+    ['Organization', me.organization],
+  ];
+  for (const [k, v, cls] of rows) {
+    if (!v) continue;
+    const dt = document.createElement('dt'); dt.append(text(k));
+    const dd = document.createElement('dd'); dd.append(text(v));
+    if (cls) dd.className = cls;
+    dl.append(dt, dd);
+  }
+  if (me.linked_identities && me.linked_identities.length > 1) {
+    const dt = document.createElement('dt'); dt.append(text('Linked'));
+    const dd = document.createElement('dd');
+    dd.append(text(me.linked_identities.map(i => i.username).join(', ')));
+    dl.append(dt, dd);
+  }
+
+  const ul = document.getElementById('groups');
+  ul.replaceChildren();
+  const groups = me.groups || [];
+  document.getElementById('nogroups').hidden = groups.length > 0;
+  for (const g of groups) {
+    const li = document.createElement('li');
+    const name = document.createElement('span'); name.append(text(g.name));
+    const role = document.createElement('span');
+    role.className = 'role'; role.dataset.r = g.role; role.append(text(g.role));
+    const id = document.createElement('span');
+    id.className = 'muted uuid'; id.append(text(g.id));
+    li.append(name, role, id);
+    ul.append(li);
+  }
+}
+
+(async function boot() {
+  try {
+    const r = await fetch(API + '/api/me', { credentials: 'include' });
+    render(r.ok ? await r.json() : null);
+  } catch (e) {
+    render(null);
+  }
+})();
+</script>
+</body>
+</html>

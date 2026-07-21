@@ -1,0 +1,21 @@
+name: Task
+description: A unit of work toward a phase
+body:
+  - type: textarea
+    id: what
+    attributes:
+      label: What
+      description: What should exist when this is done?
+    validations: {required: true}
+  - type: textarea
+    id: acceptance
+    attributes:
+      label: Acceptance
+      description: How will we know? Prefer something runnable over something readable.
+    validations: {required: true}
+  - type: dropdown
+    id: concern
+    attributes:
+      label: Cross-cutting concern
+      multiple: true
+      options: [no-clocks, security, globus, spore, none]
