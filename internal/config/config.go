@@ -29,6 +29,12 @@ type Config struct {
 	// PublicBaseURL is the origin the SPA is served from; used for CORS and
 	// for post-login redirects.
 	PublicBaseURL string
+
+	// Fake, set by ARP_FAKE_GLOBUS=1, swaps the real Globus Directory and the
+	// DynamoDB session store for in-memory stand-ins so the portal runs with no
+	// network and no Globus client configured. A development seam only; it must
+	// never be set in a deployed environment.
+	Fake bool
 }
 
 // DefaultScopes are requested at first consent. All of them are asked for up
@@ -54,6 +60,7 @@ func Load() (*Config, error) {
 		TableName:          os.Getenv("ARP_TABLE_NAME"),
 		PublicBaseURL:      os.Getenv("ARP_PUBLIC_BASE_URL"),
 		GlobusScopes:       DefaultScopes,
+		Fake:               truthy(os.Getenv("ARP_FAKE_GLOBUS")),
 	}
 
 	if raw := os.Getenv("ARP_GLOBUS_SCOPES"); raw != "" {
@@ -69,6 +76,16 @@ func Load() (*Config, error) {
 		ttl = d
 	}
 	c.SessionTTL = ttl
+
+	// The fake seam runs with no Globus client and no DynamoDB table, so none
+	// of the Globus or table keys are required. PublicBaseURL still drives the
+	// post-login redirect, so give it a local default rather than demanding it.
+	if c.Fake {
+		if c.PublicBaseURL == "" {
+			c.PublicBaseURL = "http://localhost:8080"
+		}
+		return c, nil
+	}
 
 	var missing []string
 	for _, kv := range [][2]string{
@@ -94,4 +111,16 @@ func envOr(key, fallback string) string {
 		return v
 	}
 	return fallback
+}
+
+// truthy reports whether an environment value reads as enabled. Anything other
+// than the obvious off values counts as on, so ARP_FAKE_GLOBUS=1, =true, or
+// =yes all work.
+func truthy(v string) bool {
+	switch strings.ToLower(strings.TrimSpace(v)) {
+	case "", "0", "false", "no", "off":
+		return false
+	default:
+		return true
+	}
 }
