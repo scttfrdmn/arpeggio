@@ -1,5 +1,7 @@
 #!/usr/bin/env bash
-# Create the labels, milestones, and P0 issues this repo's process depends on.
+# Create the labels and milestones this repo's process depends on, plus the two
+# P1 issues that don't yet have a per-phase script. Per-phase issues live in
+# scripts/gh-p<N>-issues.sh; this script deliberately does NOT create P0 issues.
 # Requires: gh CLI, authenticated, run from the repo root.
 #
 # Project management lives in GitHub. Do not mirror any of this into local
@@ -62,33 +64,11 @@ issue() {
   echo "  issue  $1"
 }
 
-issue "Register the Globus confidential client" \
-"Register at app.globus.org/settings/developers.
+# P0 issues live in scripts/gh-p0-issues.sh, which owns the richer set. Do not
+# recreate them here — doing so made duplicate issues that had to be deleted by
+# hand. The two issues below are P1 and have no other home yet, so they stay.
 
-- Redirect URL points at the deployed API's \`/api/auth/callback\`
-- Request all scopes at first consent (see \`config.DefaultScopes\`) — incremental consent mid-workflow is a poor portal experience
-- Store the client secret in SSM Parameter Store SecureString, **not** Secrets Manager
-
-Acceptance: \`/api/auth/login\` reaches the Globus consent screen." \
-"p0:skeleton,concern:globus" "P0 Walking skeleton"
-
-issue "Wire the Go Globus SDK behind the Directory interface" \
-"\`internal/auth/globus_http.go\` is a stand-in. Replace it with an adapter over the Go Globus SDK port.
-
-Constraint: this must require no changes outside \`internal/auth\`. If it does, the \`Directory\` interface is wrong — fix the interface, not the callers.
-
-Acceptance: \`globus_http.go\` is deleted and P0 still passes." \
-"p0:skeleton,concern:globus" "P0 Walking skeleton"
-
-issue "P0 acceptance: linked identities resolve to one subject" \
-"The phase gate.
-
-Log in as a campus InCommon identity and again as a second linked identity (ORCID or Google). \`/api/me\` must return the same \`subject\` both times, with both identities under \`linked_identities\`.
-
-This is the test that catches keying authorization on username strings instead of the identity UUID." \
-"p0:skeleton,concern:security" "P0 Walking skeleton"
-
-issue "ADR 0002: dataset tier model" \
+issue "ADR 0003: dataset tier model" \
 "P1 needs a tier attribute on every catalog entry from the start, because retrofitting the restricted tier is painful.
 
 Decide: tier vocabulary (open / registered / restricted?), what each requires, and how tier interacts with derivable roles.
