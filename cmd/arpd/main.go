@@ -76,7 +76,10 @@ func buildAuthenticator(ctx context.Context, cfg *appcfg.Config) (*auth.Authenti
 	}
 
 	table := store.New(dynamodb.NewFromConfig(awsCfg), cfg.TableName)
-	dir := auth.NewHTTPDirectory(cfg.GlobusClientID, cfg.GlobusClientSecret)
+	dir, err := auth.NewSDKDirectory(ctx, cfg.GlobusClientID, cfg.GlobusClientSecret)
+	if err != nil {
+		return nil, err
+	}
 
 	authn, err := auth.NewAuthenticator(ctx, cfg, dir, table)
 	if err != nil {
